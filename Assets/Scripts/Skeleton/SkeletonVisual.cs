@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using UnityEngine.UI;
 
 [RequireComponent(typeof(Animator))]
 [RequireComponent(typeof(SpriteRenderer))]
@@ -8,6 +9,11 @@ public class SkeletonVisual : MonoBehaviour
     [SerializeField] private EnemyAI enemyAI;
     [SerializeField] private EnemyEntity enemyEntity;
     [SerializeField] private GameObject shadowObject;
+
+    // Health UI
+    [SerializeField] private GameObject healthBar;
+    [SerializeField] private GameObject healthBarFill;
+
     private Animator animator;
     private SpriteRenderer spriteRenderer;
 
@@ -16,6 +22,8 @@ public class SkeletonVisual : MonoBehaviour
     private const string CHASING_SPEED_MULTIPLIER = "ChasingSpeedMultiplier";
     private const string ATTACK = "Attack";
     private const string IS_DIE = "IsDie";
+
+    #region Lifecycle
 
     private void Awake() {
         animator = GetComponent<Animator>();
@@ -39,6 +47,10 @@ public class SkeletonVisual : MonoBehaviour
         animator.SetFloat(CHASING_SPEED_MULTIPLIER, enemyAI.GetRoamingAnimationSpeed());
     }
 
+    #endregion
+
+    #region Public
+
     public void TriggerAttackAnimationTurnOff() {
         enemyEntity.PolygonColliderTurnOff();
     }
@@ -47,11 +59,16 @@ public class SkeletonVisual : MonoBehaviour
         enemyEntity.PolygonColliderTurnOn();
     }
 
+    #endregion
+
+    #region Animation
+
     private void EnemyAI_OnEnemyAttack(object sender, System.EventArgs e) {
         animator.SetTrigger(ATTACK);
     }
 
-    private void EnemyEntity_OnTakeHit(object sender, EventArgs e) {
+    private void EnemyEntity_OnTakeHit(object sender, EnemyHitEventArgs e) {
+        SetHealth(e.currentHealth, e.maxHealth);
         animator.SetTrigger(TAKE_HIT);
     }
 
@@ -60,4 +77,13 @@ public class SkeletonVisual : MonoBehaviour
         spriteRenderer.sortingOrder = -1;
         shadowObject.SetActive(false);
     }
+    #endregion
+
+    #region HealthBar 
+
+    private void SetHealth(float currentHealth, float maxHealth) {
+        healthBarFill.transform.localScale = new Vector3(Mathf.Clamp01(currentHealth / maxHealth), 1, 1);
+    }
+
+    #endregion
 }

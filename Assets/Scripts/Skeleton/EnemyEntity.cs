@@ -3,17 +3,23 @@ using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 using UnityEngine;
 
+public class EnemyHitEventArgs : EventArgs { 
+    public float currentHealth { get; set; }
+    public float maxHealth { get; set; }
+}
+
 [RequireComponent(typeof(PolygonCollider2D))]
 [RequireComponent(typeof(BoxCollider2D))]
 [RequireComponent(typeof(EnemyAI))]
 public class EnemyEntity : MonoBehaviour
 {
 
-    public event EventHandler OnTakeHit;
+    public event EventHandler<EnemyHitEventArgs> OnTakeHit;
     public event EventHandler OnDeath;
 
     [SerializeField] private EnemySO enemySO;
     private int currentHealth;
+    private int maxHealth;
 
     private PolygonCollider2D polygonColider2D;
     private BoxCollider2D boxCollider2D;
@@ -27,6 +33,7 @@ public class EnemyEntity : MonoBehaviour
 
     private void Start() {
         currentHealth = enemySO.enemyHealth;
+        maxHealth = enemySO.enemyHealth;
     }
 
     private void OnTriggerStay2D(Collider2D collision) {
@@ -37,7 +44,12 @@ public class EnemyEntity : MonoBehaviour
 
     public void TakeDamage(int damage) {
         currentHealth -= damage;
-        OnTakeHit?.Invoke(this, EventArgs.Empty);
+        EnemyHitEventArgs args = new EnemyHitEventArgs { 
+            currentHealth = currentHealth,
+            maxHealth = maxHealth,
+        };
+
+        OnTakeHit?.Invoke(this, args);
         DetectDeath();
     }
 
