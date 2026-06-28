@@ -8,7 +8,6 @@ public class EnemyHitEventArgs : EventArgs {
     public float maxHealth { get; set; }
 }
 
-[RequireComponent(typeof(PolygonCollider2D))]
 [RequireComponent(typeof(BoxCollider2D))]
 [RequireComponent(typeof(EnemyAI))]
 public class EnemyEntity : MonoBehaviour
@@ -18,15 +17,14 @@ public class EnemyEntity : MonoBehaviour
     public event EventHandler OnDeath;
 
     [SerializeField] private EnemySO enemySO;
+    [SerializeField] private PolygonCollider2D attackHitbox;
     private int currentHealth;
     private int maxHealth;
 
-    private PolygonCollider2D polygonColider2D;
     private BoxCollider2D boxCollider2D;
     private EnemyAI enemyAi;
 
     private void Awake() {
-        polygonColider2D = GetComponent<PolygonCollider2D>();
         boxCollider2D = GetComponent<BoxCollider2D>();
         enemyAi = GetComponent<EnemyAI>();
     }
@@ -34,12 +32,6 @@ public class EnemyEntity : MonoBehaviour
     private void Start() {
         currentHealth = enemySO.enemyHealth;
         maxHealth = enemySO.enemyHealth;
-    }
-
-    private void OnTriggerStay2D(Collider2D collision) {
-        if (collision.transform.TryGetComponent(out Player player)) {
-            player.TakeDamage(transform, enemySO.enemyDamageAmount);
-        }
     }
 
     public void TakeDamage(int damage) {
@@ -54,17 +46,17 @@ public class EnemyEntity : MonoBehaviour
     }
 
     public void PolygonColliderTurnOff() {
-        polygonColider2D.enabled = false;
+        attackHitbox.enabled = false;
     }
 
     public void PolygonColliderTurnOn() {
-        polygonColider2D.enabled = true;
+        attackHitbox.enabled = true;
     }
 
     private void DetectDeath() {
         if (currentHealth <= 0) {
             boxCollider2D.enabled = false;
-            polygonColider2D.enabled = false;
+            attackHitbox.enabled = false;
             enemyAi.SetDeathState();
             OnDeath?.Invoke(this, EventArgs.Empty);
         }
