@@ -8,6 +8,11 @@ public class NavMeshSurfaceManagment : MonoBehaviour
     public static NavMeshSurfaceManagment Instance { get; private set; }
 
     private NavMeshSurface navmeshSurface;
+    private float rebuildDelay = 0.3f;
+
+    private Coroutine rebuildCoroutine;
+    private bool rebakeInProgress = false;
+    private bool rebakeRequestedWhileInProgress = false;
 
     private void Awake() {
         Instance = this;
@@ -16,12 +21,40 @@ public class NavMeshSurfaceManagment : MonoBehaviour
     }
 
     public void Rebake() {
-        StartCoroutine(RebakeCoroutine());
+
+        if (rebuildCoroutine != null) {
+            StopCoroutine(rebuildCoroutine);
+        }
+
+        rebuildCoroutine = StartCoroutine(RebakeAfterDelayCoroutine());
     }
 
-    private IEnumerator RebakeCoroutine() {
-        yield return null;
+    private IEnumerator RebakeAfterDelayCoroutine() {
+        yield return new WaitForSeconds(rebuildDelay);
 
-        navmeshSurface.BuildNavMesh();
+        rebuildCoroutine = null;
+
+        if (rebakeInProgress) {
+            rebakeRequestedWhileInProgress = true;
+            yield break;
+        }
+
+
+        yield return RebakeNavMash();
+    }
+
+    private IEnumerator RebakeNavMash() {
+        rebakeInProgress = true;
+
+        AsyncOperation operation = navmeshSurface.BuildNavMeshAsync();
+
+        yield return operation;
+
+        rebakeInProgress = false;
+
+        if (rebakeRequestedWhileInProgress) {
+            rebakeRequestedWhileInProgress = false;
+            Rebake();
+        }
     }
 }
